@@ -1,5 +1,39 @@
+from __future__ import annotations
+import sys
+import argparse
+from time import perf_counter
+from typing import List, Tuple, Iterable, Union
 
-def heapify(arr, n, i):
+Number = Union[int, float]
+
+
+def read_numbers_from_file(path: str) -> List[Number]:
+    """
+    공백/줄바꿈/쉼표로 구분된 숫자를 읽어 리스트로 반환.
+    가능한 정수(int)로, 아니면 실수(float)로 파싱.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            text = f.read()
+    except FileNotFoundError:
+        raise SystemExit(f"[에러] 파일을 찾을 수 없습니다: {path}")
+
+    tokens = text.replace(",", " ").split()
+    nums: List[Number] = []
+    for i, t in enumerate(tokens, 1):
+        s = t.strip().lower()
+        if s in {"+inf", "inf", "-inf", "nan"}:
+            raise SystemExit(f"[에러] {i}번째 토큰이 비정상 숫자입니다: {t!r}")
+        try:
+            if "." in s or "e" in s:
+                nums.append(float(s))
+            else:
+                nums.append(int(s))
+        except ValueError:
+            raise SystemExit(f"[에러] {i}번째 토큰이 숫자가 아닙니다: {t!r}")
+    return nums
+
+def heapify(arr: List[Number], n: int, i: int) -> None:
     largest = i
     l = 2*i + 1
     r = 2*i + 2
@@ -12,66 +46,14 @@ def heapify(arr, n, i):
         heapify(arr, n, largest)
 
 
-import sys
-from time import perf_counter
-from typing import List
 
-def merge_sort(arr):
-    if len(arr) < 2:
-        return arr
-
-    mid = len(arr) // 2
-    low_arr = merge_sort(arr[:mid])
-    high_arr = merge_sort(arr[mid:])
-
-    merged_arr = []
-    l = h = 0
-    while l < len(low_arr) and h < len(high_arr):
-        if low_arr[l] < high_arr[h]:
-            merged_arr.append(low_arr[l])
-            l += 1
-        else:
-            merged_arr.append(high_arr[h])
-            h += 1
-    merged_arr += low_arr[l:]
-    merged_arr += high_arr[h:]
-    return merged_arr
-
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("사용법: python main.py <파일명>")
-        sys.exit(1)
-    
-    filename = sys.argv[1]
-    
-    try:
-        # 파일에서 데이터 읽기
-        with open(filename, 'r') as file:
-            data = file.read().strip().split()
-            # 문자열을 정수로 변환
-            numbers = [int(x) for x in data]
-        
-        print("원본 데이터:", numbers)
-        
-        # 병합 정렬 수행
-        sorted_numbers = merge_sort(numbers)
-        
-        print("정렬된 데이터:", sorted_numbers)
-        
-    except FileNotFoundError:
-        print(f"파일 '{filename}'을 찾을 수 없습니다.")
-    except ValueError:
-        print("파일에 유효하지 않은 숫자가 포함되어 있습니다.")
-    except Exception as e:
-        print(f"오류가 발생했습니다: {e}")
-
-def quick_sort(arr: List[float], low: int, high: int) -> None:
+def quick_sort(arr: List[Number], low: int, high: int) -> None:
     if low < high:
         pivot_index = partition(arr, low, high)
         quick_sort(arr, low, pivot_index - 1)
         quick_sort(arr, pivot_index + 1, high)
 
-def partition(arr: List[float], low: int, high: int) -> int:
+def partition(arr: List[Number], low: int, high: int) -> int:
     pivot = arr[high]
     i = low - 1
     for j in range(low, high):
@@ -81,11 +63,6 @@ def partition(arr: List[float], low: int, high: int) -> int:
     arr[i + 1], arr[high] = arr[high], arr[i + 1]
     return i + 1
 
-def read_numbers_from_file(path: str) -> List[float]:
-    with open(path, "r", encoding="utf-8") as f:
-        text = f.read()
-    tokens = text.replace(",", " ").split()
-    return [float(t) if "." in t or "e" in t.lower() else int(t) for t in tokens]
 
 def quick_main(filename):
     numbers = read_numbers_from_file(filename)
@@ -96,14 +73,9 @@ def quick_main(filename):
     print(" ".join(str(x) for x in numbers))
     print(f"\n정렬 소요 시간: {elapsed * 1000:.3f} ms")
 
-if __name__ == '__main__':
-    filename = sys.argv[1]
-    quick_main(filename)
-
-
 
    
-def bubble_sort(arr: List[float]) -> List[float]:
+def bubble_sort(arr: List[Number]) -> None:
     """In-place bubble sort (오름차순)."""
     n = len(arr)
     # 조기 종료 최적화
@@ -118,28 +90,7 @@ def bubble_sort(arr: List[float]) -> List[float]:
             break
     return arr
 
-def read_numbers_from_file(path: str) -> List[float]:
-    """공백/줄바꿈으로 구분된 숫자들 읽기 (정수/실수 모두 허용)."""
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
-    except FileNotFoundError:
-        raise SystemExit(f"[에러] 파일을 찾을 수 없습니다: {path}")
 
-    tokens = text.split()
-    numbers: List[float] = []
-    for idx, t in enumerate(tokens, 1):
-        try:
-            # 가능하면 정수로, 아니면 실수로
-            if t.strip().lower() in {"+inf", "inf", "-inf", "nan"}:
-                raise ValueError("비정상 숫자 토큰")
-            if "." in t or "e" in t.lower():
-                numbers.append(float(t))
-            else:
-                numbers.append(int(t))
-        except ValueError:
-            raise SystemExit(f"[에러] {idx}번째 토큰이 숫자가 아닙니다: {t!r}")
-    return numbers
 
 def bubble_main(filename):
     numbers = read_numbers_from_file(filename)
@@ -155,15 +106,8 @@ def bubble_main(filename):
     # 소요 시간 출력 (ms)
     print(f"\n정렬 소요 시간: {elapsed * 1000:.3f} ms")
 
-if __name__ == '__main__':
-   filename = sys.argv[1]
-   
-   data = load_ints(filename)
-   bubble_main(filename) # 버블 정렬 - 강현우
-   selection_sort(data)          
-   print(*data)   
 
-def selection_sort(arr):
+def selection_sort(arr: List[Number]) -> None:
     n = len(arr)
     for i in range(n - 1):
         min_idx = i
@@ -187,7 +131,7 @@ def load_ints(path):
 
 def merge_sort(arr):
     if len(arr) < 2:
-        return arr
+        return arr[:]
 
     mid = len(arr) // 2
     low_arr = merge_sort(arr[:mid])
@@ -206,35 +150,8 @@ def merge_sort(arr):
     merged_arr += high_arr[h:]
     return merged_arr
 
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("사용법: python main.py <파일명>")
-        sys.exit(1)
-    
-    filename = sys.argv[1]
-    
-    try:
-        # 파일에서 데이터 읽기
-        with open(filename, 'r') as file:
-            data = file.read().strip().split()
-            # 문자열을 정수로 변환
-            numbers = [int(x) for x in data]
-        
-        print("원본 데이터:", numbers)
-        
-        # 병합 정렬 수행
-        sorted_numbers = merge_sort(numbers)
-        
-        print("정렬된 데이터:", sorted_numbers)
-        
-    except FileNotFoundError:
-        print(f"파일 '{filename}'을 찾을 수 없습니다.")
-    except ValueError:
-        print("파일에 유효하지 않은 숫자가 포함되어 있습니다.")
-    except Exception as e:
-        print(f"오류가 발생했습니다: {e}")
 
-def heap_sort(arr):
+def heap_sort(arr: List[Number]) -> None:
     n = len(arr)
     for i in range(n//2 - 1, -1, -1):
         heapify(arr, n, i)
@@ -242,7 +159,7 @@ def heap_sort(arr):
         arr[i], arr[0] = arr[0], arr[i]
         heapify(arr, i, 0)
 
-def insertion_sort(arr):
+def insertion_sort(arr: List[Number]) -> None:
     for i in range(1, len(arr)):
         key = arr[i]
         j = i - 1
@@ -250,3 +167,88 @@ def insertion_sort(arr):
             arr[j+1] = arr[j]
             j -= 1
         arr[j+1] = key
+
+
+def run_sort(algorithm: str, data: List[Number], reverse: bool) -> Tuple[List[Number], float]:
+    """
+    선택한 알고리즘으로 정렬 실행.
+    in-place 계열은 복사본 만들어서 안전하게 수행.
+    merge_sort만 새 리스트 반환.
+    """
+    if algorithm == "merge":
+        start = perf_counter()
+        out = merge_sort(data)
+        if reverse:
+            out.reverse()
+        elapsed = perf_counter() - start
+        return out, elapsed
+
+    # in-place 알고리즘들
+    arr = data[:]  # 원본 보호
+    start = perf_counter()
+    if algorithm == "quick":
+        if arr:
+            quick_sort(arr, 0, len(arr) - 1)
+    elif algorithm == "heap":
+        heap_sort(arr)
+    elif algorithm == "bubble":
+        bubble_sort(arr)
+    elif algorithm == "selection":
+        selection_sort(arr)
+    elif algorithm == "insertion":
+        insertion_sort(arr)
+    else:
+        raise SystemExit(f"[에러] 지원하지 않는 알고리즘: {algorithm}")
+    if reverse:
+        arr.reverse()
+    elapsed = perf_counter() - start
+    return arr, elapsed
+
+
+def is_sorted(a: Iterable[Number], reverse: bool = False) -> bool:
+    it = iter(a)
+    try:
+        prev = next(it)
+    except StopIteration:
+        return True
+    comp = (lambda x, y: x >= y) if reverse else (lambda x, y: x <= y)
+    for cur in it:
+        if not comp(prev, cur):
+            return False
+        prev = cur
+    return True
+
+
+def main(argv: List[str]) -> int:
+    parser = argparse.ArgumentParser(
+        description="여러 정렬 알고리즘(merge/quick/heap/bubble/selection/insertion) CLI"
+    )
+    parser.add_argument("algorithm",
+                        choices=["merge", "quick", "heap", "bubble", "selection", "insertion"],
+                        help="사용할 정렬 알고리즘")
+    parser.add_argument("filename", help="입력 데이터 파일 경로")
+    parser.add_argument("--reverse", action="store_true", help="내림차순 정렬")
+    parser.add_argument("--show-original", action="store_true", help="원본 데이터도 출력")
+    parser.add_argument("--no-output", action="store_true", help="정렬 결과를 출력하지 않음(성능 측정용)")
+    args = parser.parse_args(argv)
+
+    numbers = read_numbers_from_file(args.filename)
+    if args.show_original:
+        print("원본 데이터:")
+        print(" ".join(str(x) for x in numbers))
+
+    sorted_numbers, elapsed = run_sort(args.algorithm, numbers, args.reverse)
+
+    # 정렬 검증
+    if not is_sorted(sorted_numbers, reverse=args.reverse):
+        print("[경고] 정렬 검증 실패!", file=sys.stderr)
+
+    if not args.no_output:
+        print("정렬 결과:")
+        print(" ".join(str(x) for x in sorted_numbers))
+    print(f"\n정렬 소요 시간: {elapsed * 1000:.3f} ms")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
